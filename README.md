@@ -27,7 +27,7 @@ Run a local webserver and surf to it eg:
 
 	python -m SimpleHTTPServer 8080
 
-Browse to http://localhost:8080/build/fields1.html
+Browse to http://localhost:8080/build/fractal1.html
 
 OR:
 
