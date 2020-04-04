@@ -257,7 +257,7 @@ namespace james {
 			"    if (iteration >= max_iteration) break;\n",
 			"    green = r;"
 			"  }\n",
-			"  gl_FragColor = vec4(green/1.5, ((5.0 + log(sin(max_iteration)colour)) * 35.0)/255.0, red, 1.0);\n",
+			"  gl_FragColor = vec4(green/1.5, ((5.0 + log(sin(max_iteration)+colour)) * 35.0)/255.0, red, 1.0);\n",
 			//"  gl_FragColor = vec4((sqrt((5.0 + log(colour)) * colour) * 120.0)/255.0, ((5.0 + log(colour)) * 35.0)/255.0, (colour*25.0)/255.0, 1.0);\n",
 			"}\n"
 			};
