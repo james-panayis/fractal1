@@ -249,7 +249,7 @@ namespace james {
 			"  for (highp float iteration  = 1.0; iteration < 400.0; iteration++) {\n",
 			"    highp float tempr = r*r - i*i + v_texCoord.x;\n",
 			//"    i = sqrt(log(iter.x*0.05)) * r*i + v_texCoord.y;\n",
-			"    i = 3.0 * r*i + v_texCoord.y;\n",
+			"    i = 2.0 * r*i + v_texCoord.y;\n",
 			"    r = tempr;\n",
 			"    highp float tempcolour = i*i + r*r;\n",
 			"    if (tempcolour < colour) {colour = tempcolour; red = red + (1.0 - red) * 0.1; }\n",
@@ -257,7 +257,7 @@ namespace james {
 			"    if (iteration >= max_iteration) break;\n",
 			"    green = r;"
 			"  }\n",
-			"  gl_FragColor = vec4(green/1.5, ((5.0 + log(colour)) * 35.0)/255.0, red, 1.0);\n",
+			"  gl_FragColor = vec4(sin(max_iteration)+green/1.5, ((5.0 + log(colour)) * 35.0)/255.0, red, 1.0);\n",
 			//"  gl_FragColor = vec4((sqrt((5.0 + log(colour)) * colour) * 120.0)/255.0, ((5.0 + log(colour)) * 35.0)/255.0, (colour*25.0)/255.0, 1.0);\n",
 			"}\n"
 			};
