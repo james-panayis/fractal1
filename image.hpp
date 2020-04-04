@@ -244,12 +244,12 @@ namespace james {
 			"  highp float green = 0.0;\n",
 			"  highp float r = v_texCoord.x;\n",
 			"  highp float i = v_texCoord.y;\n",
-			"  highp float max_iteration = iter.x * 0.05;\n",
+			"  highp float max_iteration = iter.x * 0.2;\n",
 			"  highp float colour = iter.y;\n",
-			"  for (highp float iteration  = 1.0; iteration < 400.0; iteration++) {\n",
-			"    highp float tempr = r*r - i*i + v_texCoord.x;\n",
+			"  for (highp float iteration  = 1.0; iteration < 90.0; iteration++) {\n",
+			"    highp float tempr = r*r - i*i + sin(max_iteration/20.0)*v_texCoord.x;\n",
 			//"    i = sqrt(log(iter.x*0.05)) * r*i + v_texCoord.y;\n",
-			"    i = 2.0 * r*i + v_texCoord.y;\n",
+			"    i = 2.0 * r*i + sin(max_iteration/32.0)*v_texCoord.y;\n",
 			"    r = tempr;\n",
 			"    highp float tempcolour = i*i + r*r;\n",
 			"    if (tempcolour < colour) {colour = tempcolour; red = red + (1.0 - red) * 0.1; }\n",
@@ -257,12 +257,19 @@ namespace james {
 			"    if (iteration >= max_iteration) break;\n",
 			"    green = r;"
 			"  }\n",
-			"  gl_FragColor = vec4(green/1.5, ((5.0 + log((10.0+sin(max_iteration))*colour)) * 35.0)/255.0, red, 1.0);\n",
+			"  highp float a = sin(max_iteration/50.0);\n",
+			"  highp float b = sin(max_iteration/50.0+1.0471975512);\n",
+			"  highp float c = sin(max_iteration/50.0+2.09439510239);\n",
+			"  highp float col1 = green/1.5;\n",
+			"  highp float col2 = ((5.0 + log(colour)) * 35.0)/255.0;\n",
+			"  highp float col3 = red;\n",
+			"  gl_FragColor = vec4(a*col1+b*col2+c*col3, b*col1+c*col2+a*col3, c*col1+a*col2+b*col3, 1.0);\n",
+			//"  gl_FragColor = vec4(a*col1+b*col2+c*col3, b*col1+c*col2+a*col3, c*col1+a*col2+b*col3, 1.0);\n",
 			//"  gl_FragColor = vec4((sqrt((5.0 + log(colour)) * colour) * 120.0)/255.0, ((5.0 + log(colour)) * 35.0)/255.0, (colour*25.0)/255.0, 1.0);\n",
 			"}\n"
 			};
 
-			len = 22;
+			len = 28;
 			/*
 			const char * fragmentShaderProg[] = {
 				"varying highp vec4 v_texCoord;\n", //range to calculate
