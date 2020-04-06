@@ -1,8 +1,3 @@
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
-#include <GLES2/gl2.h>
-
-
 #include <cstdint>
 #include <vector>
 #include <iostream>
@@ -206,7 +201,8 @@ namespace james {
 
 			// build the vertex shader
 
-			const char * vertexShaderProg[] = { "attribute vec4 position;\n",
+			const char * vertexShaderProg[] = { "#version 100\n",
+                                "attribute vec4 position;\n",
 				"attribute vec2 a_texCoord;\n",
 				"uniform mat4 proj;\n",
 				"uniform vec4 offset;\n",
@@ -222,7 +218,7 @@ namespace james {
 				"  v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0);\n",
 				"}\n"
 			};
-			GLuint len = 15;
+			GLuint len = 16;
 
 			vertexShader_ = glCreateShader(GL_VERTEX_SHADER);
 
@@ -235,7 +231,8 @@ namespace james {
 
 			// build the fragment shader
 			
-			const char * fragmentShaderProg[] = { "varying highp vec4 v_texCoord;\n",
+			const char * fragmentShaderProg[] = { "#version 100\n",
+                        "varying highp vec4 v_texCoord;\n",
 			"uniform sampler2D s_texture;\n",
 			"uniform highp vec2 iter;\n",
 			"void main()\n",
@@ -269,31 +266,31 @@ namespace james {
 			"}\n"
 			};
 
-			len = 28;
+			len = 29;
 			/*
 			const char * fragmentShaderProg[] = {
-				"varying highp vec4 v_texCoord;\n", //range to calculate
+				"varying vec4 v_texCoord;\n", //range to calculate
 				"uniform sampler2D s_texture;\n", //texture input
-				"uniform highp vec4 iter;\n", //inputs
+				"uniform vec4 iter;\n", //inputs
 				"void main()\n",
 				"{\n",
-				"  highp float red = 0.0;\n", //these will be used in colouring (store values for colours)
-				"  highp float green = 0.0;\n",
-				"  highp float r = v_texCoord.x;\n", //coords to calculate over
-				"  highp float i = v_texCoord.y;\n",
-				"  highp float max_iteration = iter.x * 0.05;\n", //to depth
-				"  highp float d1 = 0.0*sqrt(r*r +i*i)*iter.y/10.0;\n", //distance to each point
-				"  highp float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*(50.0);\n",//+0.9*iter.y/6.0)/2.;\n",
-				"  highp float d3 = sqrt((r-iter.z)*(r-iter.z) + (i-iter[3])*(i-iter[3]))*50.0;\n",
-				//"  highp float d1 = sqrt((r+iter.y/2000.0)*(r+iter.y/2000.0) +(i+iter.y/4000.0)*(i+iter.y/4000.0))*50.0;\n",
-				//"  highp float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*50.0;\n",
-				//"  highp float d3 = sqrt((r-1.0)*(r-1.0) + (i-1.0)*(i-1.0))*50.0;\n",
-				"  highp float c = (cos(d1)) + (cos(d2)) + (cos(d3));\n", //sum  vectors in 2d
-				"  highp float s = (sin(d1)) + (sin(d2)) + (sin(d3));\n",
-				//"  highp float c = cos(d1) + cos(d2);\n",
-				//"  highp float s = sin(d1) + sin(d2);\n",
-				"  highp float colour = (c*c + s*s)/4.0;\n", //calculate magnitude of resultant vector
-				//"  highp float colour = (0.5 + 0.5*sqrt(c*c + s*s))/2.0;\n",
+				"  float red = 0.0;\n", //these will be used in colouring (store values for colours)
+				"  float green = 0.0;\n",
+				"  float r = v_texCoord.x;\n", //coords to calculate over
+				"  float i = v_texCoord.y;\n",
+				"  float max_iteration = iter.x * 0.05;\n", //to depth
+				"  float d1 = 0.0*sqrt(r*r +i*i)*iter.y/10.0;\n", //distance to each point
+				"  float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*(50.0);\n",//+0.9*iter.y/6.0)/2.;\n",
+				"  float d3 = sqrt((r-iter.z)*(r-iter.z) + (i-iter[3])*(i-iter[3]))*50.0;\n",
+				//"  float d1 = sqrt((r+iter.y/2000.0)*(r+iter.y/2000.0) +(i+iter.y/4000.0)*(i+iter.y/4000.0))*50.0;\n",
+				//"  float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*50.0;\n",
+				//"  float d3 = sqrt((r-1.0)*(r-1.0) + (i-1.0)*(i-1.0))*50.0;\n",
+				"  float c = (cos(d1)) + (cos(d2)) + (cos(d3));\n", //sum  vectors in 2d
+				"  float s = (sin(d1)) + (sin(d2)) + (sin(d3));\n",
+				//"  float c = cos(d1) + cos(d2);\n",
+				//"  float s = sin(d1) + sin(d2);\n",
+				"  float colour = (c*c + s*s)/4.0;\n", //calculate magnitude of resultant vector
+				//"  float colour = (0.5 + 0.5*sqrt(c*c + s*s))/2.0;\n",
 				"  gl_FragColor = vec4(2.0*(3.0*colour-2.0) - (3.0*colour-2.0)*(3.0*colour-2.0), 2.0*(2.0*colour-1.0) - (2.0*colour-1.0)*(2.0*colour-1.0), 2.0*colour - colour*colour, 1.0);\n", //colourise
 				//"  gl_FragColor = vec4(4.0*colour - 4.0*colour*colour, 6.0*colour - 9.0*colour*colour, 2.0*colour - colour*colour, 1.0);\n",
 				//"  gl_FragColor = vec4(colour*2.0-0.5, 0.75*colour+0.25, 2.0*colour - colour*colour, 1.0);\n",
