@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <vector>
 #include <iostream>
+#include <string>
+#include <cmath>
 
 extern float projectionMatrix_[16];
 
@@ -201,28 +203,30 @@ namespace james {
 
 			// build the vertex shader
 
-			const char * vertexShaderProg[] = { "#version 100\n",
-                                "attribute vec4 position;\n",
-				"attribute vec2 a_texCoord;\n",
-				"uniform mat4 proj;\n",
-				"uniform vec4 offset;\n",
-				"uniform vec2 scale;\n",
-				"uniform vec4 rot;\n",
-				"varying vec4 v_texCoord;\n",
-				"void main()\n",
-				"{\n",
-				"  mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);\n",
-				"  mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,  -sin(rot.z), cos(rot.z), 0, 0,  0, 0, 1, 0,  0, 0, 0, 1);\n",
-				"  vec4 t = rotation * position;\n",
-				"  gl_Position = proj * ((a_scale * t) + offset);\n",
-				"  v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0);\n",
-				"}\n"
-			};
-			GLuint len = 16;
+			std::string prog = 
+				"#version 100\n\
+        attribute vec4 position; \
+				attribute vec2 a_texCoord; \
+				uniform mat4 proj; \
+				uniform vec4 offset; \
+				uniform vec2 scale; \
+				uniform vec4 rot; \
+				varying vec4 v_texCoord; \
+				void main() \
+				{ \
+				  mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
+				  mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,  -sin(rot.z), cos(rot.z), 0, 0,  0, 0, 1, 0,  0, 0, 0, 1); \
+				  vec4 t = rotation * position; \
+				  gl_Position = proj * ((a_scale * t) + offset); \
+				  v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0); \
+				} \
+			";
+
+			const char * c_str = prog.c_str();
 
 			vertexShader_ = glCreateShader(GL_VERTEX_SHADER);
 
-			glShaderSource(vertexShader_, len, vertexShaderProg, NULL);
+			glShaderSource(vertexShader_, 1, &c_str, NULL);
 			glCompileShader(vertexShader_);
 
 			glGetShaderiv(vertexShader_, GL_COMPILE_STATUS, &status);
@@ -231,42 +235,63 @@ namespace james {
 
 			// build the fragment shader
 			
-			const char * fragmentShaderProg[] = { "#version 100\n",
-                        "varying highp vec4 v_texCoord;\n",
-			"uniform sampler2D s_texture;\n",
-			"uniform highp vec2 iter;\n",
-			"void main()\n",
-			"{\n",
-			"  highp float red = 0.0;\n",
-			"  highp float green = 0.0;\n",
-			"  highp float r = v_texCoord.x;\n",
-			"  highp float i = v_texCoord.y;\n",
-			"  highp float max_iteration = iter.x * 0.2;\n",
-			"  highp float colour = iter.y;\n",
-			"  for (highp float iteration  = 1.0; iteration < 90.0; iteration++) {\n",
-			"    highp float tempr = r*r - i*i + sin(max_iteration/20.0)*v_texCoord.x;\n",
-			//"    i = sqrt(log(iter.x*0.05)) * r*i + v_texCoord.y;\n",
-			"    i = 2.0 * r*i + sin(max_iteration/32.0)*v_texCoord.y;\n",
-			"    r = tempr;\n",
-			"    highp float tempcolour = i*i + r*r;\n",
-			"    if (tempcolour < colour) {colour = tempcolour; red = red + (1.0 - red) * 0.1; }\n",
-			"    if (colour == 0.0) {red = 1.0; break;}\n",
-			"    if (iteration >= max_iteration) break;\n",
-			"    green = r;"
-			"  }\n",
-			"  highp float a = sin(max_iteration/50.0);\n",
-			"  highp float b = sin(max_iteration/50.0+1.0471975512);\n",
-			"  highp float c = sin(max_iteration/50.0+2.09439510239);\n",
-			"  highp float col1 = green/1.5;\n",
-			"  highp float col2 = ((5.0 + log(colour)) * 35.0)/255.0;\n",
-			"  highp float col3 = red;\n",
-			"  gl_FragColor = vec4(a*col1+b*col2+c*col3, b*col1+c*col2+a*col3, c*col1+a*col2+b*col3, 1.0);\n",
-			//"  gl_FragColor = vec4(a*col1+b*col2+c*col3, b*col1+c*col2+a*col3, c*col1+a*col2+b*col3, 1.0);\n",
-			//"  gl_FragColor = vec4((sqrt((5.0 + log(colour)) * colour) * 120.0)/255.0, ((5.0 + log(colour)) * 35.0)/255.0, (colour*25.0)/255.0, 1.0);\n",
-			"}\n"
-			};
+			prog = 
+				"#version 100\n\
+				varying highp vec4 v_texCoord; \
+				uniform sampler2D s_texture; \
+				uniform highp vec2 iter; \
+				void main() \
+				{ \
+					highp float red = 0.0; \
+					highp float r = v_texCoord.x; \
+					highp float i = v_texCoord.y; \
+					highp float max_iteration = iter.x * 0.2; \
+					highp float blue = iter.y; \
+					\
+					highp float rr = 0.0; \
+					highp float ii = 0.0; \
+					\
+					highp float minrr = 100.0; \
+					highp float minii = 100.0; \
+					\
+					highp float timea = 0.0; \
+					if (sin(max_iteration/200.0) > 0.707) {timea = (sin(max_iteration/200.0) - 0.707)*0.003;} \
+					highp float timeb = 0.0; \
+					if (sin(max_iteration/200.0) < -0.707) {timeb = (sin(max_iteration/200.0) + 0.707)*0.03;} \
+					\
+					highp float sm20 = sin(max_iteration/20.0); \
+					highp float sm32 = sin(max_iteration/32.0); \
+					\
+					for (highp float iteration  = 1.0; iteration < 90.0; iteration++) { \
+						highp float tempr = r*r - i*i + sm20*v_texCoord.x + timea*iteration + timeb*sin(iteration/100.0)*iteration; \
+						i = 2.0 * r*i + sm32*v_texCoord.y; \
+						r = tempr; \
+						rr = r*r; ii = i*i; \
+						highp float sqdist = ii + rr; \
+						if (sqdist < blue) {blue = sqdist; red += (1.0 - red) * 0.1; } \
+						if (blue == 0.0) {red = 1.0; break;} \
+						if (iteration >= max_iteration) break; \
+						if (rr < minrr) minrr = rr; \
+						if (ii < minii) minii = ii; \
+					} \
+					\
+					highp float a = sin(max_iteration/50.0); \
+					highp float b = sin(max_iteration/50.0+1.0471975512); \
+					highp float c = sin(max_iteration/50.0+2.09439510239); \
+					\
+					highp float col1 = r/1.5; \
+					highp float col2 = ((5.0 + log(blue)) * 35.0)/255.0; \
+					highp float col3 = red; \
+					\
+					highp float colr = minrr * sin(max_iteration/120.0); \
+					colr = colr * colr * colr * 1000.0; \
+					highp float coli = minii * sin(max_iteration/180.0); \
+					coli = coli * coli * coli * 1000.0; \
+					\
+					gl_FragColor = vec4(a*col1+b*col2+c*col3+colr+coli, b*col1+c*col2+a*col3+colr+coli, c*col1+a*col2+b*col3+colr+coli, 1.0); \
+				} \
+			";
 
-			len = 29;
 			/*
 			const char * fragmentShaderProg[] = {
 				"varying vec4 v_texCoord;\n", //range to calculate
@@ -313,9 +338,12 @@ namespace james {
 			};
 			len = 6;
 			*/
+
+			c_str = prog.c_str();
+
 			fragmentShader_ = glCreateShader(GL_FRAGMENT_SHADER);
 
-			glShaderSource(fragmentShader_, len, fragmentShaderProg, NULL);
+			glShaderSource(fragmentShader_, 1, &c_str, NULL);
 			glCompileShader(fragmentShader_);
 
 			glGetShaderiv(fragmentShader_, GL_COMPILE_STATUS, &status);
