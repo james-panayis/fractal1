@@ -236,7 +236,7 @@ private:
 	{
 		// event: window_resize
 
-		emscripten_set_resize_callback(canvas_.c_str(), this, 1, f_window_size);
+		emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, f_window_size);
 
 
 		// event: window_focus

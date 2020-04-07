@@ -102,6 +102,10 @@ public:
 
     im->set_size(pixel_width_, pixel_height_);
     im->update(r1, r2, i1, i2);
+
+		#ifdef __EMSCRIPTEN__
+		emscripten_set_canvas_element_size("canvas", pixel_width_, pixel_height_);
+		#endif
   };
 
 
