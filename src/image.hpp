@@ -174,50 +174,56 @@ namespace james {
 				void main() \
 				{ \
 					highp float red = 0.0; \
+					highp float blue = iter.y; \
 					highp float r = v_texCoord.x; \
 					highp float i = v_texCoord.y; \
-					highp float max_iteration = iter.x * 0.2; \
-					highp float blue = iter.y; \
+					highp float stage = iter.x * 0.2; \
+					highp float iteration_limit = 90.0; \
+					if (stage < iteration_limit) {iteration_limit = stage;} \
 					\
 					highp float rr = 0.0; \
 					highp float ii = 0.0; \
+					highp float sqdist = 0.0; \
 					\
 					highp float minrr = 100.0; \
 					highp float minii = 100.0; \
 					\
 					highp float timea = 0.0; \
-					if (sin(max_iteration/200.0) > 0.707) {timea = (sin(max_iteration/200.0) - 0.707)*0.003;} \
+					if (sin(stage/200.0) > 0.707) {timea = (sin(stage/50.0 + 1.57079632679) + 1.0) * 0.0005;} \
 					highp float timeb = 0.0; \
-					if (sin(max_iteration/200.0) < -0.707) {timeb = (sin(max_iteration/200.0) + 0.707)*0.03;} \
+					if (sin(stage/200.0) < -0.707) {timeb = (sin(stage/50.0 + 1.57079632679) + 1.0) * -0.005;} \
 					\
-					highp float sm20 = sin(max_iteration/20.0); \
-					highp float sm32 = sin(max_iteration/32.0); \
+					highp float ss20 = sin(stage/20.0); \
+					highp float ss32 = sin(stage/32.0); \
 					\
 					for (highp float iteration	= 1.0; iteration < 90.0; iteration++) { \
-						highp float tempr = r*r - i*i + sm20*v_texCoord.x + timea*iteration + timeb*sin(iteration/100.0)*iteration; \
-						i = 2.0 * r*i + sm32*v_texCoord.y; \
+						highp float tempr = r*r - i*i + ss20*v_texCoord.x + (timea + timeb*sin(iteration/100.0)) * iteration; \
+						i = 2.0 * r*i + ss32*v_texCoord.y; \
 						r = tempr; \
 						rr = r*r; ii = i*i; \
-						highp float sqdist = ii + rr; \
+						sqdist = ii + rr; \
 						if (sqdist < blue) {blue = sqdist; red += (1.0 - red) * 0.1; } \
 						if (blue == 0.0) {red = 1.0; break;} \
-						if (iteration >= max_iteration) break; \
+						if (iteration >= stage) break; \
 						if (rr < minrr) minrr = rr; \
 						if (ii < minii) minii = ii; \
 					} \
 					\
-					highp float a = sin(max_iteration/50.0); \
-					highp float b = sin(max_iteration/50.0+1.0471975512); \
-					highp float c = sin(max_iteration/50.0+2.09439510239); \
+					highp float a = sin(stage/50.0); \
+					highp float b = sin(stage/50.0+1.0471975512); \
+					highp float c = sin(stage/50.0+2.09439510239); \
 					\
-					highp float col1 = r/1.5; \
+					highp float col1 = 0.0; \
 					highp float col2 = ((5.0 + log(blue)) * 35.0)/255.0; \
 					highp float col3 = red; \
 					\
-					highp float colr = minrr * sin(max_iteration/120.0); \
+					highp float colr = minrr * sin(stage/120.0); \
 					colr = colr * colr * colr * 1000.0; \
-					highp float coli = minii * sin(max_iteration/180.0); \
+					highp float coli = minii * sin(stage/180.0); \
 					coli = coli * coli * coli * 1000.0; \
+					\
+					if (sin(stage/1200.0) > 0.0) col1 = (sin(stage/600.0 + 1.57079632679) + 1.0) * r/1.5; \
+					else col1 = -(sin(stage/600.0 + 1.57079632679) + 1.0) * (colr/(coli+1.0) + coli/(colr+1.0)); \
 					\
 					gl_FragColor = vec4(a*col1+b*col2+c*col3+colr+coli, b*col1+c*col2+a*col3+colr+coli, c*col1+a*col2+b*col3+colr+coli, 1.0); \
 				} \

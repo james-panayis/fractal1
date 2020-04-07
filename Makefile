@@ -43,6 +43,7 @@ install-web:
 	mkdir -p ${WEBPATH}
 	cp build-web/${NAME}.html ${WEBPATH}/index.html 
 	cp build-web/$(NAME).js build-web/$(NAME).wasm $(WEBPATH)/
+	cp src/preload.conf $(WEBPATH)/.htaccess
 	cd $(WEBPATH); brotli -f index.html -o index.html.br; brotli -f $(NAME).js -o $(NAME).js.br; brotli -f $(NAME).wasm -o $(NAME).wasm.br
 	cd $(WEBPATH); gzip -f -k index.html; gzip -f -k $(NAME).js; gzip -f -k $(NAME).wasm
 
