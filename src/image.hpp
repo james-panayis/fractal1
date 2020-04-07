@@ -1,8 +1,5 @@
-#include <cstdint>
 #include <vector>
-#include <iostream>
 #include <string>
-#include <cmath>
 
 extern float projectionMatrix_[16];
 
@@ -282,7 +279,7 @@ namespace james {
 
 			glGetShaderiv(fragmentShader_, GL_COMPILE_STATUS, &status);
 
-			if (status == GL_FALSE) { std::cout << "did not compile\n"; check_compiled(fragmentShader_); return false; }
+			if (status == GL_FALSE) {printf("did not compile\n"); check_compiled(fragmentShader_); return false; }
 
 			// link the program and store the entry points
 
@@ -295,7 +292,7 @@ namespace james {
 
 			glGetProgramiv(program_, GL_LINK_STATUS, &status);
 
-			if (status == GL_FALSE) { std::cout << "did not link\n"; return false; }
+			if (status == GL_FALSE) { printf("did not link\n"); return false; }
 
 			attribPosition_ = glGetAttribLocation(program_, "position");
 			attribTexcoords_ = glGetAttribLocation(program_, "a_texCoord");
@@ -326,7 +323,7 @@ namespace james {
 				glGetShaderInfoLog(shader, max_len, &max_len, &err_log[0]);
 				glDeleteShader(shader);
 
-				std::cout << "Shader compilation failed: " << err_log << std::endl;
+				printf("Shader compilation failed: %s\n", err_log);
 			}
 
 			return success;
@@ -345,7 +342,7 @@ namespace james {
 				GLchar err_log[max_len];
 				glGetProgramInfoLog(program, max_len, &max_len, &err_log[0]);
 
-				std::cout << "Program linking failed: " << err_log << std::endl;
+				printf("Program linking failed: %s\n", err_log);
 			}
 
 			return success;
