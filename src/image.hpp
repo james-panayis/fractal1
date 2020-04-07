@@ -56,50 +56,13 @@ namespace james {
 
 				// setup the vertex data
 
-				std::vector<float> v;
+				float w = (float)width;
+				float h = (float)height;
 
-				v.push_back(0.0);
-				v.push_back(0.0);
-				v.push_back(0.0);
-				v.push_back(1.0);
-
-				v.push_back(-2.0);
-				v.push_back(-1.0);
-				//v.push_back(0.0);
-				//v.push_back(0.0);
-
-
-				v.push_back(width);
-				v.push_back(0.0);
-				v.push_back(0.0);
-				v.push_back(1.0);
-
-				v.push_back(1.0);
-				v.push_back(-1.0);
-				//v.push_back(1.0);
-				//v.push_back(0.0);
-
-
-				v.push_back(0.0);
-				v.push_back(height);
-				v.push_back(0.0);
-				v.push_back(1.0);
-
-				v.push_back(-2.0);
-				v.push_back(1.0);
-				//v.push_back(0.0);
-				//v.push_back(1.0);
-
-
-				v.push_back(width);
-				v.push_back(height);
-				v.push_back(0.0);
-				v.push_back(1.0);
-
-				//v.push_back(1.0);
-				//v.push_back(1.0);
-				v.push_back(1.0);
-				v.push_back(1.0);
+				std::vector<float> v = { 0, 0, 0, 1, -2, -1,
+																 w, 0, 0, 1,	1, -1,
+																 0, h, 0, 1, -2,	1,
+																 w, h, 0, 1,	1,	1 };
 
 				// store the vertex on the gpu
 
@@ -126,39 +89,10 @@ namespace james {
 
 		void update(float r1, float r2, float i1, float i2) {
 
-			std::vector<float> v;
-
-			v.push_back(0.0);
-			v.push_back(0.0);
-			v.push_back(0.0);
-			v.push_back(1.0);
-
-			v.push_back(r1);
-			v.push_back(i1);
-
-			v.push_back(width_);
-			v.push_back(0.0);
-			v.push_back(0.0);
-			v.push_back(1.0);
-
-			v.push_back(r2);
-			v.push_back(i1);
-
-			v.push_back(0.0);
-			v.push_back(height_);
-			v.push_back(0.0);
-			v.push_back(1.0);
-
-			v.push_back(r1);
-			v.push_back(i2);
-
-			v.push_back(width_);
-			v.push_back(height_);
-			v.push_back(0.0);
-			v.push_back(1.0);
-
-			v.push_back(r2);
-			v.push_back(i2);
+			std::vector<float> v = { 0,			0,			 0, 1, r1, i1,
+															 width_, 0,			 0, 1, r2, i1,
+															 0,			height_, 0, 1, r1, i2,
+															 width_, height_, 0, 1, r2, i2 };
 
 			// store the vertex on the gpu
 
@@ -205,7 +139,7 @@ namespace james {
 
 			std::string prog = 
 				"#version 100\n\
-        attribute vec4 position; \
+				attribute vec4 position; \
 				attribute vec2 a_texCoord; \
 				uniform mat4 proj; \
 				uniform vec4 offset; \
@@ -214,11 +148,11 @@ namespace james {
 				varying vec4 v_texCoord; \
 				void main() \
 				{ \
-				  mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
-				  mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,  -sin(rot.z), cos(rot.z), 0, 0,  0, 0, 1, 0,  0, 0, 0, 1); \
-				  vec4 t = rotation * position; \
-				  gl_Position = proj * ((a_scale * t) + offset); \
-				  v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0); \
+					mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
+					mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,	-sin(rot.z), cos(rot.z), 0, 0,	0, 0, 1, 0,	0, 0, 0, 1); \
+					vec4 t = rotation * position; \
+					gl_Position = proj * ((a_scale * t) + offset); \
+					v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0); \
 				} \
 			";
 
@@ -262,7 +196,7 @@ namespace james {
 					highp float sm20 = sin(max_iteration/20.0); \
 					highp float sm32 = sin(max_iteration/32.0); \
 					\
-					for (highp float iteration  = 1.0; iteration < 90.0; iteration++) { \
+					for (highp float iteration	= 1.0; iteration < 90.0; iteration++) { \
 						highp float tempr = r*r - i*i + sm20*v_texCoord.x + timea*iteration + timeb*sin(iteration/100.0)*iteration; \
 						i = 2.0 * r*i + sm32*v_texCoord.y; \
 						r = tempr; \
@@ -299,27 +233,27 @@ namespace james {
 				"uniform vec4 iter;\n", //inputs
 				"void main()\n",
 				"{\n",
-				"  float red = 0.0;\n", //these will be used in colouring (store values for colours)
-				"  float green = 0.0;\n",
-				"  float r = v_texCoord.x;\n", //coords to calculate over
-				"  float i = v_texCoord.y;\n",
-				"  float max_iteration = iter.x * 0.05;\n", //to depth
-				"  float d1 = 0.0*sqrt(r*r +i*i)*iter.y/10.0;\n", //distance to each point
-				"  float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*(50.0);\n",//+0.9*iter.y/6.0)/2.;\n",
-				"  float d3 = sqrt((r-iter.z)*(r-iter.z) + (i-iter[3])*(i-iter[3]))*50.0;\n",
-				//"  float d1 = sqrt((r+iter.y/2000.0)*(r+iter.y/2000.0) +(i+iter.y/4000.0)*(i+iter.y/4000.0))*50.0;\n",
-				//"  float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*50.0;\n",
-				//"  float d3 = sqrt((r-1.0)*(r-1.0) + (i-1.0)*(i-1.0))*50.0;\n",
-				"  float c = (cos(d1)) + (cos(d2)) + (cos(d3));\n", //sum  vectors in 2d
-				"  float s = (sin(d1)) + (sin(d2)) + (sin(d3));\n",
-				//"  float c = cos(d1) + cos(d2);\n",
-				//"  float s = sin(d1) + sin(d2);\n",
-				"  float colour = (c*c + s*s)/4.0;\n", //calculate magnitude of resultant vector
-				//"  float colour = (0.5 + 0.5*sqrt(c*c + s*s))/2.0;\n",
-				"  gl_FragColor = vec4(2.0*(3.0*colour-2.0) - (3.0*colour-2.0)*(3.0*colour-2.0), 2.0*(2.0*colour-1.0) - (2.0*colour-1.0)*(2.0*colour-1.0), 2.0*colour - colour*colour, 1.0);\n", //colourise
-				//"  gl_FragColor = vec4(4.0*colour - 4.0*colour*colour, 6.0*colour - 9.0*colour*colour, 2.0*colour - colour*colour, 1.0);\n",
-				//"  gl_FragColor = vec4(colour*2.0-0.5, 0.75*colour+0.25, 2.0*colour - colour*colour, 1.0);\n",
-				//"  gl_FragColor = vec4((sqrt((5.0 + log(colour)) * colour) * 120.0)/255.0, ((5.0 + log(colour)) * 35.0)/255.0, (colour*25.0)/255.0, 1.0);\n",
+				"	float red = 0.0;\n", //these will be used in colouring (store values for colours)
+				"	float green = 0.0;\n",
+				"	float r = v_texCoord.x;\n", //coords to calculate over
+				"	float i = v_texCoord.y;\n",
+				"	float max_iteration = iter.x * 0.05;\n", //to depth
+				"	float d1 = 0.0*sqrt(r*r +i*i)*iter.y/10.0;\n", //distance to each point
+				"	float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*(50.0);\n",//+0.9*iter.y/6.0)/2.;\n",
+				"	float d3 = sqrt((r-iter.z)*(r-iter.z) + (i-iter[3])*(i-iter[3]))*50.0;\n",
+				//"	float d1 = sqrt((r+iter.y/2000.0)*(r+iter.y/2000.0) +(i+iter.y/4000.0)*(i+iter.y/4000.0))*50.0;\n",
+				//"	float d2 = sqrt((r-1.0)*(r-1.0) + i*i)*50.0;\n",
+				//"	float d3 = sqrt((r-1.0)*(r-1.0) + (i-1.0)*(i-1.0))*50.0;\n",
+				"	float c = (cos(d1)) + (cos(d2)) + (cos(d3));\n", //sum	vectors in 2d
+				"	float s = (sin(d1)) + (sin(d2)) + (sin(d3));\n",
+				//"	float c = cos(d1) + cos(d2);\n",
+				//"	float s = sin(d1) + sin(d2);\n",
+				"	float colour = (c*c + s*s)/4.0;\n", //calculate magnitude of resultant vector
+				//"	float colour = (0.5 + 0.5*sqrt(c*c + s*s))/2.0;\n",
+				"	gl_FragColor = vec4(2.0*(3.0*colour-2.0) - (3.0*colour-2.0)*(3.0*colour-2.0), 2.0*(2.0*colour-1.0) - (2.0*colour-1.0)*(2.0*colour-1.0), 2.0*colour - colour*colour, 1.0);\n", //colourise
+				//"	gl_FragColor = vec4(4.0*colour - 4.0*colour*colour, 6.0*colour - 9.0*colour*colour, 2.0*colour - colour*colour, 1.0);\n",
+				//"	gl_FragColor = vec4(colour*2.0-0.5, 0.75*colour+0.25, 2.0*colour - colour*colour, 1.0);\n",
+				//"	gl_FragColor = vec4((sqrt((5.0 + log(colour)) * colour) * 120.0)/255.0, ((5.0 + log(colour)) * 35.0)/255.0, (colour*25.0)/255.0, 1.0);\n",
 				"}\n"
 			};
 
@@ -333,7 +267,7 @@ namespace james {
 			"uniform sampler2D s_texture;\n",
 			"void main()\n",
 			"{\n",
-			"  gl_FragColor = texture2DProj(s_texture, v_texCoord.xyw);\n",
+			"	gl_FragColor = texture2DProj(s_texture, v_texCoord.xyw);\n",
 			"}\n"
 			};
 			len = 6;
@@ -431,40 +365,24 @@ namespace james {
 
 		// Shader setings
 
-		static bool shaderCreated_;
+		inline static bool shaderCreated_ = false;
 
-		static GLuint program_;
+		inline static GLuint program_ = 0;
 
-		static GLuint vertexShader_;
-		static GLuint fragmentShader_;
+		inline static GLuint vertexShader_ = 0;
+		inline static GLuint fragmentShader_ = 0;
 
-		static GLint  attribPosition_;
-		static GLint  attribTexcoords_;
-		static GLint  attribSample_;
+		inline static GLint	attribPosition_ = 0;
+		inline static GLint	attribTexcoords_ = 0;
+		inline static GLint	attribSample_ = 0;
 
-		static GLint  uniformProj_;
-		static GLint  uniformOffset_;
-		static GLint  uniformScale_;
-		static GLint  uniformRot_;
-		static GLint  uniformIter_;
+		inline static GLint	uniformProj_ = 0;
+		inline static GLint	uniformOffset_ = 0;
+		inline static GLint	uniformScale_ = 0;
+		inline static GLint	uniformRot_ = 0;
+		inline static GLint	uniformIter_ = 0;
 
 	}; // class image
 
-	bool image::shaderCreated_ = false;
-
-	GLuint image::program_ = 0;
-
-	GLuint image::vertexShader_ = 0;
-	GLuint image::fragmentShader_ = 0;
-
-	GLint image::attribPosition_ = 0;
-	GLint image::attribTexcoords_ = 0;
-	GLint image::attribSample_ = 0;
-
-	GLint image::uniformProj_ = 0;
-	GLint image::uniformOffset_ = 0;
-	GLint image::uniformScale_ = 0;
-	GLint image::uniformRot_ = 0;
-	GLint image::uniformIter_ = 0;
 
 } // namespace
