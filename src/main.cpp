@@ -22,6 +22,8 @@
 #include "image.hpp"
 
 
+ui_event_interface * ui__ = nullptr;
+
 int ctx_{0};
 
 int viewport_width_{0};
@@ -194,29 +196,34 @@ public:
 
 	void mouse_button(enum MouseButton button, enum MouseButtonEvent event, enum KeyMod mods)
 	{
-		switch (event)
+		if (button == MouseButtonLeft)
 		{
-			case ui_event::MouseButtonEventDown:
+			switch (event)
 			{
-				if (s == 0)
+				case MouseButtonEventDown:
 				{
-					r1 = -2.75;
-					r2 = 1.5;
-					i1 = -1.5;
-					i2 = 1.25;
+					if (s == 0)
+					{
+						r1 = -2.75;
+						r2 = 1.5;
+						i1 = -1.5;
+						i2 = 1.25;
 
-					iter1 = 1;
-					iter2 = 1;
-					iter3 = 0;
-					iter4 = 0;
-					iter5 = 0;
+						iter1 = 1;
+						iter2 = 1;
+						iter3 = 0;
+						iter4 = 0;
+						iter5 = 0;
+					}
+					s = 0.0;
+					break;
 				}
-				s = 0.0;
-				break;
-			}
 
-			default: break;
+				default: break;
+			}
 		}
+
+		if (button == MouseButtonRight && event == MouseButtonEventDown) to_fullscreen();
 	};
 
 
@@ -249,9 +256,10 @@ public:
 
 	void touch(int id, enum TouchEvent event, int x, int y)
 	{
-		if (event == TouchEventDown)
+		if (event == TouchEventDown && id == 2)
 		{
-			r1 *= 2;
+			printf("got touch down from id: %d\n", id);
+			to_fullscreen();
 		}
 	};
 
@@ -331,15 +339,34 @@ int main(int argc, char *argv[])
 
 	EmscriptenWebGLContextAttributes ctxAttrs;
 	emscripten_webgl_init_context_attributes(&ctxAttrs);
+
 	ctxAttrs.antialias = true;
+
+	// try and create a webgl2 context first
+
+	ctxAttrs.majorVersion = 2;
+	ctxAttrs.minorVersion = 0;
+
 	ctx_ = emscripten_webgl_create_context("canvas", &ctxAttrs);
 
+	if (ctx_ <= 0) // unbale to create w webgl2 context so try a webgl1 context
+	{
+		ctxAttrs.majorVersion = 1;
+		ctx_ = emscripten_webgl_create_context("canvas", &ctxAttrs);
+	}
+
 	emscripten_webgl_make_context_current(ctx_);
+
+	printf("webgl context version: %s\n", glGetString(GL_VERSION));
 
 	emscripten_set_beforeunload_callback(nullptr, quit);
 
 	ui_event_ = new ui_event(true);
+
+	ui_event_->set_context(ui_event::ContextWebGL, (float)ctxAttrs.majorVersion);
 	ui_event_->start("canvas");
+
+	ui__ = ui_event_;
 
 #else
 
@@ -364,8 +391,18 @@ int main(int argc, char *argv[])
 
 	glfwMakeContextCurrent(window);
 
+	GLint major = 0, minor = 0;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+
 	ui_event i(true);
+
+	// this pretends to be a webgl 1 or 2 instance
+	i.set_context(ui_event::ContextWebGL, 2.0);
+
 	i.start(window);
+
+	ui__ = &i;
 
 #endif
 

@@ -88,6 +88,22 @@ public:
 	};
 
 
+	void to_fullscreen()
+	{
+		EmscriptenFullscreenChangeEvent e;
+		emscripten_get_fullscreen_status(&e);
+
+		if (e.isFullscreen == EM_TRUE)
+		{
+			emscripten_exit_fullscreen();
+		}
+		else
+		{
+			emscripten_request_fullscreen(canvas_.c_str(), true);
+		}
+	};
+
+
 private:
 
 
@@ -213,9 +229,11 @@ private:
 	{
 		ui_event_impl * ui = reinterpret_cast<ui_event_impl *>(user_data);
 
-		for (const auto& t : e->touches)
+		for (int i = 0; i < e->numTouches; i++)
 		{
-			if (t.isChanged)
+			const auto& t = e->touches[i];
+
+			if (t.isChanged == EM_TRUE)
 			{
 				switch (event_type)
 				{
@@ -284,10 +302,10 @@ private:
 
 		// event: touch
 
-		emscripten_set_touchstart_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, f_touch);
-		emscripten_set_touchend_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, f_touch);
-		emscripten_set_touchmove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, f_touch);
-		emscripten_set_touchcancel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 1, f_touch);
+		emscripten_set_touchstart_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 0, f_touch);
+		emscripten_set_touchend_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 0, f_touch);
+		emscripten_set_touchmove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 0, f_touch);
+		emscripten_set_touchcancel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, this, 0, f_touch);
 	};
 
 

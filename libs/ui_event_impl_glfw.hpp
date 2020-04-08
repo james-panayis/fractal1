@@ -38,10 +38,38 @@ public:
 	};
 
 
+	void to_fullscreen()
+	{
+		GLFWmonitor* monitor = glfwGetWindowMonitor(window_);
+
+		if (monitor) // window is already full size so shrink it
+		{
+			glfwSetWindowMonitor(window_, NULL, orig_xpos_, orig_ypos_, orig_width_, orig_height_, 0);
+			return;
+		}
+
+		int count = 0;
+		GLFWmonitor** monitors = glfwGetMonitors(&count);
+
+		if (count < 1) { fprintf(stderr, "Unable to find a monitor\n"); return; }
+
+		const GLFWvidmode* mode = glfwGetVideoMode(monitors[0]);
+
+		if (!mode) { fprintf(stderr, "Unable to get monitor mode\n"); return; }
+
+		glfwGetWindowPos(window_, &orig_xpos_, &orig_ypos_);
+		glfwGetWindowSize(window_, &orig_width_, &orig_height_);
+
+		glfwSetWindowMonitor(window_, monitors[0], 0, 0, mode->width, mode->height, mode->refreshRate);
+	};
+
+
 private:
 
 
 	GLFWwindow * window_;	// a ui_event is associated with a specific window
+
+	int orig_xpos_, orig_ypos_, orig_width_, orig_height_; // for going back from a fullsize window
 
 
 	void init()

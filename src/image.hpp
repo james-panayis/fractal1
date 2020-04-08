@@ -1,7 +1,11 @@
 #include <vector>
 #include <string>
 
+#include "libs/ui_event_interface.hpp"
+
+
 extern float projectionMatrix_[16];
+extern ui_event_interface * ui__;
 
 namespace james {
 
@@ -130,28 +134,58 @@ namespace james {
 
 		bool create_shader()
 		{
+			enum ui_event_interface::Context c;
+			float v;
+			ui__->get_context(c, v);
+
 			GLint status;
 
 			// build the vertex shader
 
-			std::string prog = 
-				"#version 100\n\
-				attribute vec4 position; \
-				attribute vec2 a_texCoord; \
-				uniform mat4 proj; \
-				uniform vec4 offset; \
-				uniform vec2 scale; \
-				uniform vec4 rot; \
-				varying vec4 v_texCoord; \
-				void main() \
-				{ \
-					mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
-					mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,	-sin(rot.z), cos(rot.z), 0, 0,	0, 0, 1, 0,	0, 0, 0, 1); \
-					vec4 t = rotation * position; \
-					gl_Position = proj * ((a_scale * t) + offset); \
-					v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0); \
-				} \
-			";
+			std::string prog;
+
+			if (c == ui_event_interface::ContextWebGL && v == 1.0) // webgl1
+			{
+				prog = 
+					"#version 100\n\
+					attribute vec4 position; \
+					attribute vec2 a_texCoord; \
+					uniform mat4 proj; \
+					uniform vec4 offset; \
+					uniform vec2 scale; \
+					uniform vec4 rot; \
+					varying vec4 v_texCoord; \
+					void main() \
+					{ \
+						mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
+						mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,	-sin(rot.z), cos(rot.z), 0, 0,	0, 0, 1, 0,	0, 0, 0, 1); \
+						vec4 t = rotation * position; \
+						gl_Position = proj * ((a_scale * t) + offset); \
+						v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0); \
+					} \
+				";
+			}
+			else // webgl2
+			{
+				prog = 
+					"#version 300 es\n\
+					in vec4 position; \
+					in vec2 a_texCoord; \
+					uniform mat4 proj; \
+					uniform vec4 offset; \
+					uniform vec2 scale; \
+					uniform vec4 rot; \
+					out vec4 v_texCoord; \
+					void main() \
+					{ \
+						mat4 a_scale = mat4(scale.x, 0.0, 0.0, 0.0, 0.0, scale.y, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \
+						mat4 rotation = mat4(cos(rot.z), sin(rot.z), 0, 0,	-sin(rot.z), cos(rot.z), 0, 0,	0, 0, 1, 0,	0, 0, 0, 1); \
+						vec4 t = rotation * position; \
+						gl_Position = proj * ((a_scale * t) + offset); \
+						v_texCoord = vec4(a_texCoord.x, a_texCoord.y, 0.0, 1.0); \
+					} \
+				";
+			}
 
 			const char * c_str = prog.c_str();
 
@@ -162,72 +196,141 @@ namespace james {
 
 			glGetShaderiv(vertexShader_, GL_COMPILE_STATUS, &status);
 
-			if (status == GL_FALSE) { return false; }
+			if (status == GL_FALSE) { printf("Unable to compile vertex shader\n"); check_compiled(vertexShader_); return false; }
 
 			// build the fragment shader
 			
-			prog = 
-				"#version 100\n\
-				varying highp vec4 v_texCoord; \
-				uniform sampler2D s_texture; \
-				uniform highp vec2 iter; \
-				void main() \
-				{ \
-					highp float red = 0.0; \
-					highp float blue = iter.y; \
-					highp float r = v_texCoord.x; \
-					highp float i = v_texCoord.y; \
-					highp float stage = iter.x * 0.2; \
-					highp float iteration_limit = 90.0; \
-					if (stage < iteration_limit) {iteration_limit = stage;} \
-					\
-					highp float rr = 0.0; \
-					highp float ii = 0.0; \
-					highp float sqdist = 0.0; \
-					\
-					highp float minrr = 100.0; \
-					highp float minii = 100.0; \
-					\
-					highp float timea = 0.0; \
-					if (sin(stage/200.0) > 0.707) {timea = (sin(stage/50.0 + 1.57079632679) + 1.0) * 0.0005;} \
-					highp float timeb = 0.0; \
-					if (sin(stage/200.0) < -0.707) {timeb = (sin(stage/50.0 + 1.57079632679) + 1.0) * -0.005;} \
-					\
-					highp float ss20 = sin(stage/20.0); \
-					highp float ss32 = sin(stage/32.0); \
-					\
-					for (highp float iteration	= 1.0; iteration < 90.0; iteration++) { \
-						highp float tempr = r*r - i*i + ss20*v_texCoord.x + (timea + timeb*sin(iteration/100.0)) * iteration; \
-						i = 2.0 * r*i + ss32*v_texCoord.y; \
-						r = tempr; \
-						rr = r*r; ii = i*i; \
-						sqdist = ii + rr; \
-						if (sqdist < blue) {blue = sqdist; red += (1.0 - red) * 0.1; } \
-						if (blue == 0.0) {red = 1.0; break;} \
-						if (iteration >= stage) break; \
-						if (rr < minrr) minrr = rr; \
-						if (ii < minii) minii = ii; \
+			if (c == ui_event_interface::ContextWebGL && v == 1.0) // webgl1
+      {
+				prog = 
+					"#version 100\n\
+					varying highp vec4 v_texCoord; \
+					uniform sampler2D s_texture; \
+					uniform highp vec2 iter; \
+					void main() \
+					{ \
+						highp float red = 0.0; \
+						highp float blue = iter.y; \
+						highp float r = v_texCoord.x; \
+						highp float i = v_texCoord.y; \
+						highp float stage = iter.x * 0.2; \
+						highp float iteration_limit = 90.0; \
+						if (stage < iteration_limit) {iteration_limit = stage;} \
+						\
+						highp float rr = 0.0; \
+						highp float ii = 0.0; \
+						highp float sqdist = 0.0; \
+						\
+						highp float minrr = 100.0; \
+						highp float minii = 100.0; \
+						\
+						highp float timea = 0.0; \
+						if (sin(stage/200.0) > 0.707) {timea = (sin(stage/50.0 + 1.57079632679) + 1.0) * 0.0005;} \
+						highp float timeb = 0.0; \
+						if (sin(stage/200.0) < -0.707) {timeb = (sin(stage/50.0 + 1.57079632679) + 1.0) * -0.005;} \
+						\
+						highp float ss20 = sin(stage/20.0); \
+						highp float ss32 = sin(stage/32.0); \
+						\
+						for (highp float iteration	= 1.0; iteration < 90.0; iteration++) { \
+							highp float tempr = r*r - i*i + ss20*v_texCoord.x + (timea + timeb*sin(iteration/100.0)) * iteration; \
+							i = 2.0 * r*i + ss32*v_texCoord.y; \
+							r = tempr; \
+							rr = r*r; ii = i*i; \
+							sqdist = ii + rr; \
+							if (sqdist < blue) {blue = sqdist; red += (1.0 - red) * 0.1; } \
+							if (blue == 0.0) {red = 1.0; break;} \
+							if (iteration >= stage) break; \
+							if (rr < minrr) minrr = rr; \
+							if (ii < minii) minii = ii; \
+						} \
+						\
+						highp float a = sin(stage/50.0); \
+						highp float b = sin(stage/50.0+1.0471975512); \
+						highp float c = sin(stage/50.0+2.09439510239); \
+						\
+						highp float col1 = 0.0; \
+						highp float col2 = ((5.0 + log(blue)) * 35.0)/255.0; \
+						highp float col3 = red; \
+						\
+						highp float colr = minrr * sin(stage/120.0); \
+						colr = colr * colr * colr * 1000.0; \
+						highp float coli = minii * sin(stage/180.0); \
+						coli = coli * coli * coli * 1000.0; \
+						\
+						if (sin(stage/1200.0) > 0.0) col1 = (sin(stage/600.0 + 1.57079632679) + 1.0) * r/1.5; \
+						else col1 = -(sin(stage/600.0 + 1.57079632679) + 1.0) * (colr/(coli+1.0) + coli/(colr+1.0)); \
+						\
+						gl_FragColor = vec4(a*col1+b*col2+c*col3+colr+coli, b*col1+c*col2+a*col3+colr+coli, c*col1+a*col2+b*col3+colr+coli, 1.0); \
 					} \
-					\
-					highp float a = sin(stage/50.0); \
-					highp float b = sin(stage/50.0+1.0471975512); \
-					highp float c = sin(stage/50.0+2.09439510239); \
-					\
-					highp float col1 = 0.0; \
-					highp float col2 = ((5.0 + log(blue)) * 35.0)/255.0; \
-					highp float col3 = red; \
-					\
-					highp float colr = minrr * sin(stage/120.0); \
-					colr = colr * colr * colr * 1000.0; \
-					highp float coli = minii * sin(stage/180.0); \
-					coli = coli * coli * coli * 1000.0; \
-					\
-					if (sin(stage/1200.0) > 0.0) col1 = (sin(stage/600.0 + 1.57079632679) + 1.0) * r/1.5; \
-					else col1 = -(sin(stage/600.0 + 1.57079632679) + 1.0) * (colr/(coli+1.0) + coli/(colr+1.0)); \
-					\
-					gl_FragColor = vec4(a*col1+b*col2+c*col3+colr+coli, b*col1+c*col2+a*col3+colr+coli, c*col1+a*col2+b*col3+colr+coli, 1.0); \
-				} \
-			";
+				";
+			}
+			else // webgl2
+			{
+				prog = 
+					"#version 300 es\n\
+					in highp vec4 v_texCoord; \
+					uniform sampler2D s_texture; \
+					uniform highp vec2 iter; \
+					out highp vec4 outCol; \
+					void main() \
+					{ \
+						highp float red = 0.0; \
+						highp float blue = iter.y; \
+						highp float r = v_texCoord.x; \
+						highp float i = v_texCoord.y; \
+						highp float stage = iter.x * 0.2; \
+						highp float iteration_limit = 90.0; \
+						if (stage < iteration_limit) {iteration_limit = stage;} \
+						\
+						highp float rr = 0.0; \
+						highp float ii = 0.0; \
+						highp float sqdist = 0.0; \
+						\
+						highp float minrr = 100.0; \
+						highp float minii = 100.0; \
+						\
+						highp float timea = 0.0; \
+						if (sin(stage/200.0) > 0.707) {timea = (sin(stage/50.0 + 1.57079632679) + 1.0) * 0.0005;} \
+						highp float timeb = 0.0; \
+						if (sin(stage/200.0) < -0.707) {timeb = (sin(stage/50.0 + 1.57079632679) + 1.0) * -0.005;} \
+						\
+						highp float ss20 = sin(stage/20.0); \
+						highp float ss32 = sin(stage/32.0); \
+						\
+						for (highp float iteration	= 1.0; iteration < 90.0; iteration++) { \
+							highp float tempr = r*r - i*i + ss20*v_texCoord.x + (timea + timeb*sin(iteration/100.0)) * iteration; \
+							i = 2.0 * r*i + ss32*v_texCoord.y; \
+							r = tempr; \
+							rr = r*r; ii = i*i; \
+							sqdist = ii + rr; \
+							if (sqdist < blue) {blue = sqdist; red += (1.0 - red) * 0.1; } \
+							if (blue == 0.0) {red = 1.0; break;} \
+							if (iteration >= stage) break; \
+							if (rr < minrr) minrr = rr; \
+							if (ii < minii) minii = ii; \
+						} \
+						\
+						highp float a = sin(stage/50.0); \
+						highp float b = sin(stage/50.0+1.0471975512); \
+						highp float c = sin(stage/50.0+2.09439510239); \
+						\
+						highp float col1 = 0.0; \
+						highp float col2 = ((5.0 + log(blue)) * 35.0)/255.0; \
+						highp float col3 = red; \
+						\
+						highp float colr = minrr * sin(stage/120.0); \
+						colr = colr * colr * colr * 1000.0; \
+						highp float coli = minii * sin(stage/180.0); \
+						coli = coli * coli * coli * 1000.0; \
+						\
+						if (sin(stage/1200.0) > 0.0) col1 = (sin(stage/600.0 + 1.57079632679) + 1.0) * r/1.5; \
+						else col1 = -(sin(stage/600.0 + 1.57079632679) + 1.0) * (colr/(coli+1.0) + coli/(colr+1.0)); \
+						\
+						outCol = vec4(a*col1+b*col2+c*col3+colr+coli, b*col1+c*col2+a*col3+colr+coli, c*col1+a*col2+b*col3+colr+coli, 1.0); \
+					} \
+				";
+			}
 
 			/*
 			const char * fragmentShaderProg[] = {
@@ -285,7 +388,7 @@ namespace james {
 
 			glGetShaderiv(fragmentShader_, GL_COMPILE_STATUS, &status);
 
-			if (status == GL_FALSE) {printf("did not compile\n"); check_compiled(fragmentShader_); return false; }
+			if (status == GL_FALSE) {printf("did not compile fragment shader\n"); check_compiled(fragmentShader_); return false; }
 
 			// link the program and store the entry points
 

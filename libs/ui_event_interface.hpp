@@ -75,6 +75,51 @@ public:
 		LandscapeSecondary = 1<<3
 	};
 
+	// For gpu context version
+
+	enum Context
+	{
+		ContextNone        = 0,
+
+		ContextWebGL       = 1<<0,		// web
+		ContextWebGPU      = 1<<1,
+
+		ContextOpenGL      = 1<<2,    // linux
+		ContextVulkan      = 1<<3,
+
+		ContextMetal       = 1<<4,    // apple
+
+		ContextDirectx     = 1<<5     // microsoft
+	};
+
+
+	// setters
+
+	virtual void set_context(enum Context context, float version)
+	{
+		if (debug_) printf("set_context(context: %d version: %f)\n", context, version);
+
+		context_ = context;
+		version_ = version;
+	};
+
+
+	virtual void to_fullscreen()
+	{
+		if (debug_) printf("to_fullscreen()\n");
+	};
+
+
+	// getters
+
+  virtual void get_context(enum Context& context, float& version)
+	{
+		context = context_;
+		version = version_;
+	};
+
+
+	// callbacks
 
 	virtual void window_size(int width, int height)
 	{
@@ -139,6 +184,9 @@ public:
 private:
 
 
-	bool debug_;
+	bool debug_ = false;
+
+	enum Context context_ = ContextNone;
+	float version_ = 0;
 
 }; // class ui_event_interface

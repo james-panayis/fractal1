@@ -31,7 +31,7 @@ install-native:
 
 WEB_CC=emcc
 WEB_CFLAGS=-std=c++17 -Os -I./
-WEB_OPTIONS=-s WASM=1 -s USE_WEBGL2=0 -s FILESYSTEM=0 -s ENVIRONMENT='web' --closure 1
+WEB_OPTIONS=-s WASM=1 -s USE_WEBGL2=1 -s FILESYSTEM=0 -s ENVIRONMENT='web' --closure 1
 WEB_DEPS= $(COMMON_DEPS_SRC) $(COMMON_DEPS_LIBS) src/shell_fullscreen.html libs/ui_event_impl_web.hpp
 
 build-web/$(NAME).html: $(WEB_DEPS)
